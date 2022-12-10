@@ -2,8 +2,9 @@ import curses
 import time
 import board
 import os
-
-os.system('mode con: cols=50 lines=28')
+import readchar
+import graphical
+import sys 
 
 menu = ['Play', 'Level:', 'Scoreboard', 'Exit']
 
@@ -32,6 +33,10 @@ ingame = False
 inscoreboard = False
 pause = False
 
+#defines a type of tetris game
+#0 for console version, 1 for graphical version
+#default 0
+TETRIS_TYPE = 0 
 
 def init_colors():
     """Init colors"""
@@ -237,99 +242,111 @@ def draw_title():
     window.refresh()
 
 if __name__ == "__main__":
-    try:
-        while inprogram:    
-            current_row = 0
-            scr = curses.initscr()
-            curses.beep()
-            curses.noecho()
-            curses.cbreak()
-            curses.start_color()
-            curses.curs_set(0)
-            init_colors()
-            menu_window = init_main_menu()
-            while inmenu:
-                draw_menu(menu_window, current_row)
-                draw_menu_title(menu_window)
-                key = menu_window.getch()
-                if key == curses.KEY_UP and current_row > 0:
-                    current_row -= 1
-                elif key == curses.KEY_DOWN and current_row < len(menu)-1:
-                    current_row += 1
-                elif ((key == curses.KEY_LEFT) or (key in [10, 13])) and (current_row == 1):
-                    if menulevel >=2:
-                        menulevel -= 1
-                elif ((key == curses.KEY_RIGHT) or (key in [10, 13])) and (current_row == 1):
-                    menulevel += 1
-                elif key == curses.KEY_ENTER or key in [10, 13]:
-                    if current_row == 0:
-                        game_board = board.Board(BOARD_HEIGHT, BOARD_WIDTH)
-                        game_board.start(menulevel)
-                        old_score = game_board.score
-                        ingame = True
-                        menu_window.clear()
-                        menu_window.refresh()
-                        draw_title()
-                        draw_help_window()
-                        game_window = init_game_window()
-                        status_window = init_status_window()
-                        draw_game_window(game_window)
-                        draw_status_window(status_window)
-                        start = time.time()
-                        while ingame:
-                            key_event = game_window.getch()
-                            # hack: redraw it on resize
-                            if key_event == curses.KEY_RESIZE:
-                                draw_title()
-                                draw_help_window()
-                                draw_game_window(game_window)
-                            if key_event == 27:
-                                ingame = False  
-                            if not game_board.is_game_over():
-                                if not pause:
-                                    if time.time() - start >= 1 / game_board.level:
-                                        game_board.move_block("down")
-                                        start = time.time()
-                                    if key_event == curses.KEY_UP:
-                                        game_board.rotate_block()
-                                    elif key_event == curses.KEY_DOWN:
-                                        game_board.move_block("down")
-                                    elif key_event == curses.KEY_LEFT:
-                                        game_board.move_block("left")
-                                    elif key_event == curses.KEY_RIGHT:
-                                        game_board.move_block("right")
-                                    elif key_event == ord(" "):
-                                        game_board.drop()
-                                if key_event == ord("p"):
-                                    pause = not pause
-                                    game_window.nodelay(not pause)
-                            else:
-                                curses.beep()
-                                game_window.nodelay(False)
-                                if key_event == ord("\n"):
-                                    game_board.start(menulevel)
-                                    game_window.nodelay(True)
-                            draw_game_window(game_window)
-                            if old_score != game_board.score:
-                                draw_status_window(status_window)
-                                old_score = game_board.score
-                    if current_row == 1:
+    print("Choose for a tetris version you'd like to play")
+    print("[0] for console version")    
+    print("[1] for graphical version")
+    print("Any other key to exit")
+    TETRIS_TYPE = readchar.readchar()
+    if (TETRIS_TYPE == '0'):
+        print("Starting tetris in console mode...")
+        os.system('mode con: cols=50 lines=28')
+        try:
+            while inprogram:    
+                current_row = 0
+                scr = curses.initscr()
+                curses.beep()
+                curses.noecho()
+                curses.cbreak()
+                curses.start_color()
+                curses.curs_set(0)
+                init_colors()
+                menu_window = init_main_menu()
+                while inmenu:
+                    draw_menu(menu_window, current_row)
+                    draw_menu_title(menu_window)
+                    key = menu_window.getch()
+                    if key == curses.KEY_UP and current_row > 0:
+                        current_row -= 1
+                    elif key == curses.KEY_DOWN and current_row < len(menu)-1:
+                        current_row += 1
+                    elif ((key == curses.KEY_LEFT) or (key in [10, 13])) and (current_row == 1):
+                        if menulevel >=2:
+                            menulevel -= 1
+                    elif ((key == curses.KEY_RIGHT) or (key in [10, 13])) and (current_row == 1):
                         menulevel += 1
-                    if current_row == 2:
-                        menu_window.clear()
-                        menu_window.refresh()
-                        inscoreboard = True
-                        scoreboard_window = init_scoreboard_window()
-                        while inscoreboard:
-                            draw_scoreboard(scoreboard_window)
-                            key = scoreboard_window.getch()
-                            if key == 27:
-                                inscoreboard = False
-                    if current_row == len(menu)-1:
+                    elif key == curses.KEY_ENTER or key in [10, 13]:
+                        if current_row == 0:
+                            game_board = board.Board(BOARD_HEIGHT, BOARD_WIDTH)
+                            game_board.start(menulevel)
+                            old_score = game_board.score
+                            ingame = True
+                            menu_window.clear()
+                            menu_window.refresh()
+                            draw_title()
+                            draw_help_window()
+                            game_window = init_game_window()
+                            status_window = init_status_window()
+                            draw_game_window(game_window)
+                            draw_status_window(status_window)
+                            start = time.time()
+                            while ingame:
+                                key_event = game_window.getch()
+                                # hack: redraw it on resize
+                                if key_event == curses.KEY_RESIZE:
+                                    draw_title()
+                                    draw_help_window()
+                                    draw_game_window(game_window)
+                                if key_event == 27:
+                                    ingame = False  
+                                if not game_board.is_game_over():
+                                    if not pause:
+                                        if time.time() - start >= 1 / game_board.level:
+                                            game_board.move_block("down")
+                                            start = time.time()
+                                        if key_event == curses.KEY_UP:
+                                            game_board.rotate_block()
+                                        elif key_event == curses.KEY_DOWN:
+                                            game_board.move_block("down")
+                                        elif key_event == curses.KEY_LEFT:
+                                            game_board.move_block("left")
+                                        elif key_event == curses.KEY_RIGHT:
+                                            game_board.move_block("right")
+                                        elif key_event == ord(" "):
+                                            game_board.drop()
+                                    if key_event == ord("p"):
+                                        pause = not pause
+                                        game_window.nodelay(not pause)
+                                else:
+                                    curses.beep()
+                                    game_window.nodelay(False)
+                                    if key_event == ord("\n"):
+                                        game_board.start(menulevel)
+                                        game_window.nodelay(True)
+                                draw_game_window(game_window)
+                                if old_score != game_board.score:
+                                    draw_status_window(status_window)
+                                    old_score = game_board.score
+                        if current_row == 1:
+                            menulevel += 1
+                        if current_row == 2:
+                            menu_window.clear()
+                            menu_window.refresh()
+                            inscoreboard = True
+                            scoreboard_window = init_scoreboard_window()
+                            while inscoreboard:
+                                draw_scoreboard(scoreboard_window)
+                                key = scoreboard_window.getch()
+                                if key == 27:
+                                    inscoreboard = False
+                        if current_row == len(menu)-1:
+                            inprogram = False
+                            break
+                    elif key == 27:
                         inprogram = False
                         break
-                elif key == 27:
-                    inprogram = False
-                    break
-    finally:
-        curses.endwin()
+        finally:
+            curses.endwin()
+    if (TETRIS_TYPE == '1'):
+        print("Starting tetris in graphical mode...")
+        graphical.game()
+    sys.exit()

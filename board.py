@@ -59,38 +59,38 @@ block_shapes = [
 #     window.refresh()
 #     time.sleep(0.4)
 
-def draw_tetris_title():
-    curses.init_pair(10, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    curses.init_pair(9, curses.COLOR_CYAN, curses.COLOR_BLACK)
-    curses.init_pair(8, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-    curses.init_pair(7, curses.COLOR_RED, curses.COLOR_BLACK)
-    curses.init_pair(6, curses.COLOR_WHITE, curses.COLOR_BLACK)
-    for i in range(6,11):
-        window = curses.newwin(TITLE_HEIGHT-1, TITLE_WIDTH-3, 1, 3)
-        window.addstr(0, 4, "#####  ####  #####  ###    #   ####", curses.color_pair(i))
-        window.addstr(1, 4, "  #    #       #    #  #   #  #", curses.color_pair(i))
-        window.addstr(2, 4, "  #    ###     #    # #    #   ###", curses.color_pair(i))
-        window.addstr(3, 4, "  #    #       #    #  #   #      #", curses.color_pair(i))
-        window.addstr(4, 4, "  #    ####    #    #   #  #  ####", curses.color_pair(i))
-        window.refresh()
-        time.sleep(0.2)
+# def draw_tetris_title():
+#     curses.init_pair(10, curses.COLOR_GREEN, curses.COLOR_BLACK)
+#     curses.init_pair(9, curses.COLOR_CYAN, curses.COLOR_BLACK)
+#     curses.init_pair(8, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+#     curses.init_pair(7, curses.COLOR_RED, curses.COLOR_BLACK)
+#     curses.init_pair(6, curses.COLOR_WHITE, curses.COLOR_BLACK)
+#     for i in range(6,11):
+#         window = curses.newwin(TITLE_HEIGHT-1, TITLE_WIDTH-3, 1, 3)
+#         window.addstr(0, 4, "#####  ####  #####  ###    #   ####", curses.color_pair(i))
+#         window.addstr(1, 4, "  #    #       #    #  #   #  #", curses.color_pair(i))
+#         window.addstr(2, 4, "  #    ###     #    # #    #   ###", curses.color_pair(i))
+#         window.addstr(3, 4, "  #    #       #    #  #   #      #", curses.color_pair(i))
+#         window.addstr(4, 4, "  #    ####    #    #   #  #  ####", curses.color_pair(i))
+#         window.refresh()
+#         time.sleep(0.2)
 
-def _burn_animation(row):
-    # window = curses.newwin(1, BOARD_WIDTH*2 , TITLE_HEIGHT+row+1, LEFT_MARGIN+1)
-    for i in range(1,BOARD_WIDTH+1):
-        window = curses.newwin(1, 2 , TITLE_HEIGHT+row+1, LEFT_MARGIN-1+2*i)
-        curses.init_pair(12, curses.COLOR_GREEN, curses.COLOR_GREEN)
-        curses.init_pair(13, curses.COLOR_YELLOW, curses.COLOR_YELLOW)
-        curses.init_pair(14, curses.COLOR_RED, curses.COLOR_RED)
-        curses.init_pair(15, curses.COLOR_MAGENTA, curses.COLOR_MAGENTA)
-        curses.init_pair(16, curses.COLOR_BLUE, curses.COLOR_BLUE)
-        window.bkgd(' ', curses.color_pair(random.randint(12, 16)))
-        window.refresh() 
-        time.sleep(0.02)
+# def _burn_animation(row):
+#     # window = curses.newwin(1, BOARD_WIDTH*2 , TITLE_HEIGHT+row+1, LEFT_MARGIN+1)
+#     for i in range(1,BOARD_WIDTH+1):
+#         window = curses.newwin(1, 2 , TITLE_HEIGHT+row+1, LEFT_MARGIN-1+2*i)
+#         curses.init_pair(12, curses.COLOR_GREEN, curses.COLOR_GREEN)
+#         curses.init_pair(13, curses.COLOR_YELLOW, curses.COLOR_YELLOW)
+#         curses.init_pair(14, curses.COLOR_RED, curses.COLOR_RED)
+#         curses.init_pair(15, curses.COLOR_MAGENTA, curses.COLOR_MAGENTA)
+#         curses.init_pair(16, curses.COLOR_BLUE, curses.COLOR_BLUE)
+#         window.bkgd(' ', curses.color_pair(random.randint(12, 16)))
+#         window.refresh() 
+#         time.sleep(0.02)
 
 class Board:
     """Board representation"""
-    draw_tetris_title
+    # draw_tetris_title
 
     def __init__(self, height, width):
         self.height = height
@@ -106,6 +106,9 @@ class Board:
         self.lines = None
         self.best_score = None
         self.level = None
+        self.was_burn = False
+        self.burn_row = 0
+        self.burn_amount = 0
 
     def start(self, menulevel):
         """Start game"""
@@ -127,6 +130,9 @@ class Board:
     def is_game_over(self):
         """Is game over"""
         return self.game_over
+    
+    def is_burn(self):
+        return self.was_burn
 
     def rotate_block(self):
         rotated_shape = list(map(list, zip(*self.current_block.shape[::-1])))
@@ -214,9 +220,10 @@ class Board:
                     self.level += 1
                 tetris = tetris + 1
                 if tetris in range(1,5):
-                    _burn_animation(row)
-        if tetris == 4:
-            draw_tetris_title()
+                    self.was_burn = True
+                    self.burn_row = row
+        self.burn_amount = tetris
+                
             
     def _check_overlapping(self, pos, shape):
         """If current block overlaps any other on the board"""
